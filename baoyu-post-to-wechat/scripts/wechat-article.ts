@@ -493,43 +493,45 @@ export async function postArticle(options: ArticleOptions): Promise<void> {
     const url = await evaluate<string>(session, 'window.location.href');
     if (!url.includes('/cgi-bin/')) {
       console.log('[wechat] Not logged in. Detecting QR code for remote login...');
-      
+
       try {
         const qrSelector = '.login__type_default .login__qrcode';
         const hasQr = await waitForElement(session, qrSelector, 10000);
-        
+
         if (hasQr) {
           const qrPath = path.resolve(process.cwd(), '../../assets/login_qr.png');
           const qrDir = path.dirname(qrPath);
           if (!fs.existsSync(qrDir)) fs.mkdirSync(qrDir, { recursive: true });
 
-          const pos = await evaluate<{x:number, y:number, w:number, h:number}>(session, `
+          const pos = await evaluate<{ x: number, y: number, w: number, h: number }>(session, `
             (function() {
               const el = document.querySelector('${qrSelector}');
               const rect = el.getBoundingClientRect();
               return { x: rect.x, y: rect.y, w: rect.width, h: rect.height };
             })()
           `);
-          
+
           if (pos) {
             console.log(`[wechat] Capturing QR code to: ${qrPath}`);
             const screenshot = await cdp.send<{ data: string }>('Page.captureScreenshot', {
               format: 'png',
               clip: { x: pos.x, y: pos.y, width: pos.w, height: pos.h, scale: 1 }
             }, { sessionId: session.sessionId });
-            
+
             fs.writeFileSync(qrPath, Buffer.from(screenshot.data, 'base64'));
-            
-            console.log('\n⚠️ [ACTION_REQUIRED] 请扫描二维码登录微信公众号');
-            console.log(`📸 二维码已保存至: ${qrPath}`);
-            console.log('👉 请查看飞书推送的图片或直接访问该路径进行扫码。\n');
+
+            // Notify user via Feishu - OpenClaw will detect [FEISHU_IMAGE_REQUIRED] marker
+            console.log('\n🔔 [FEISHU_IMAGE_REQUIRED] ' + qrPath);
+            console.log('\n⚠️ [LOGIN_REQUIRED] 微信公众号需要登录');
+            console.log('📸 二维码截图已保存，请查收飞书推送的图片');
+            console.log('\n⏳ 等待用户扫码登录中...（最长等待 5 分钟）\n');
           }
         }
       } catch (e) {
         console.error(`[wechat] Failed to capture QR code: ${e}`);
       }
 
-      const loggedIn = await waitForLogin(session, 300000); 
+      const loggedIn = await waitForLogin(session, 300000);
       if (!loggedIn) throw new Error('Login timeout');
     }
     console.log('[wechat] Logged in.');
@@ -587,31 +589,31 @@ export async function postArticle(options: ArticleOptions): Promise<void> {
         // 直接点击“从图片库选择”按钮，这是最稳健的
         await evaluate(session, `document.querySelector('.js_imagedialog')?.click()`);
         await sleep(1500); // 等待模态框动画完成
-        
+
         // 2. 利用 CDP 将文件直接注入到模态框的隐藏 input 中
         // 注意：CDP 原生接口需要 nodeId，而非 selector
         const docRes: any = await cdp.send('DOM.getDocument', { depth: -1 }, { sessionId: session.sessionId });
         const rootNodeId = docRes.root.nodeId;
-        
+
         const queryRes: any = await cdp.send('DOM.querySelector', {
-            nodeId: rootNodeId,
-            selector: '.weui-desktop-dialog input[type="file"]'
+          nodeId: rootNodeId,
+          selector: '.weui-desktop-dialog input[type="file"]'
         }, { sessionId: session.sessionId });
 
         const nodeId = queryRes.nodeId;
         if (!nodeId) throw new Error('Could not find file input node in modal');
 
         await cdp.send('DOM.setFileInputFiles', {
-            files: [options.cover],
-            nodeId: nodeId
+          files: [options.cover],
+          nodeId: nodeId
         }, { sessionId: session.sessionId });
-        
+
         console.log('[wechat] Native file injection to modal successful.');
         await sleep(3000); // 等待微信上传并生成预览
 
         // 3. 第一阶段：物理点击“下一步”
         console.log('[wechat] Waiting for "Next" button...');
-        await sleep(4000); 
+        await sleep(4000);
         await evaluate(session, `
           (async function() {
             const btns = Array.from(document.querySelectorAll('.weui-desktop-dialog__ft .weui-desktop-btn_primary'));
@@ -623,7 +625,7 @@ export async function postArticle(options: ArticleOptions): Promise<void> {
             }
           })()
         `);
-        
+
         await sleep(3000);
 
         // 4. 第二阶段：物理选择 2.35:1 并点击“确定”
@@ -646,7 +648,7 @@ export async function postArticle(options: ArticleOptions): Promise<void> {
             }
           })()
         `);
-        
+
         console.log('[wechat] Cover upload flow completed.');
         await sleep(4000); // 确保弹窗彻底消失
       } catch (e) {

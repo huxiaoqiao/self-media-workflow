@@ -1009,7 +1009,35 @@ class SelfMediaController:
             env["PYTHONIOENCODING"] = "utf-8"
             
             print(f"执行命令: {' '.join(cmd)}")
-            result = subprocess.run(cmd, cwd=scripts_dir, env=env)
+            result = subprocess.run(cmd, cwd=scripts_dir, env=env, capture_output=True, text=True)
+            
+            # 打印输出以便调试
+            if result.stdout:
+                print(result.stdout)
+            if result.stderr:
+                print(result.stderr, file=sys.stderr)
+            
+            # 检测登录二维码并尝试通过飞书发送
+            feishu_marker = "[FEISHU_IMAGE_REQUIRED]"
+            if method == "browser" and feishu_marker in result.stdout:
+                import re
+                match = re.search(feishu_marker + r'\s+(.+)', result.stdout)
+                if match:
+                    img_path = match.group(1).strip()
+                    print(f"\n🔔 检测到登录二维码，尝试通过飞书发送...")
+                    try:
+                        send_result = subprocess.run(
+                            ["openclaw", "feishu", "send", "--image", img_path],
+                            capture_output=True, text=True, timeout=30
+                        )
+                        if send_result.returncode == 0:
+                            print("✅ 二维码已通过飞书发送给您，请扫码登录")
+                        else:
+                            print(f"⚠️ 飞书发送失败，请手动查看: {img_path}")
+                    except FileNotFoundError:
+                        print(f"⚠️ openclaw 命令不可用，请手动查看二维码: {img_path}")
+                    except subprocess.TimeoutExpired:
+                        print(f"⚠️ 飞书发送超时，请手动查看: {img_path}")
             
             if result.returncode == 0:
                 print("✅ 公众号草稿上传成功！")
