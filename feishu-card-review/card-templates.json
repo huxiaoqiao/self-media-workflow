@@ -1,0 +1,267 @@
+{
+  "templates": {
+    "xiaohongshu-final": {
+      "name": "小红书笔记最终稿发布卡片",
+      "config": {
+        "wide_screen_mode": true
+      },
+      "header": {
+        "template": "blue",
+        "title": {
+          "tag": "plain_text",
+          "content": "✅ 笔记最终稿"
+        }
+      },
+      "elements": [
+        {
+          "tag": "img",
+          "img_key": "${IMAGE_KEY}",
+          "alt": {
+            "tag": "plain_text",
+            "content": "封面图"
+          }
+        },
+        {
+          "tag": "div",
+          "text": {
+            "tag": "lark_md",
+            "content": "${FULL_CONTENT}"
+          }
+        },
+        {
+          "tag": "hr"
+        },
+        {
+          "tag": "note",
+          "elements": [
+            {
+              "tag": "plain_text",
+              "content": "${TAGS}"
+            }
+          ]
+        },
+        {
+          "tag": "action",
+          "actions": [
+            {
+              "tag": "button",
+              "text": {
+                "tag": "plain_text",
+                "content": "🍠 发布到小红书"
+              },
+              "type": "primary",
+              "multi_url": {
+                "url": "https://creator.xiaohongshu.com",
+                "android_url": "xhsdiscover://",
+                "ios_url": "xhsdiscover://"
+              }
+            }
+          ]
+        }
+      ]
+    },
+    "xiaohongshu-note": {
+      "name": "小红书笔记审核卡片",
+      "config": {
+        "wide_screen_mode": true
+      },
+      "header": {
+        "template": "blue",
+        "title": {
+          "tag": "plain_text",
+          "content": "🍠 小红书笔记审核"
+        }
+      },
+      "elements": [
+        {
+          "tag": "img",
+          "img_key": "${IMAGE_KEY}",
+          "alt": {
+            "tag": "plain_text",
+            "content": "封面图"
+          }
+        },
+        {
+          "tag": "div",
+          "text": {
+            "tag": "lark_md",
+            "content": "${CONTENT}"
+          }
+        },
+        {
+          "tag": "hr"
+        },
+        {
+          "tag": "note",
+          "elements": [
+            {
+              "tag": "plain_text",
+              "content": "${TAGS}"
+            }
+          ]
+        },
+        {
+          "tag": "action",
+          "actions": [
+            {
+              "tag": "button",
+              "text": {
+                "tag": "plain_text",
+                "content": "✅ 通过"
+              },
+              "type": "primary",
+              "value": "approve_${NOTE_ID}"
+            },
+            {
+              "tag": "button",
+              "text": {
+                "tag": "plain_text",
+                "content": "✏️ 修改"
+              },
+              "type": "default",
+              "value": "modify_${NOTE_ID}"
+            },
+            {
+              "tag": "button",
+              "text": {
+                "tag": "plain_text",
+                "content": "❌ 重写"
+              },
+              "type": "default",
+              "value": "rewrite_${NOTE_ID}"
+            }
+          ]
+        }
+      ]
+    },
+    "design-review": {
+      "name": "设计稿审核卡片",
+      "config": {
+        "wide_screen_mode": true
+      },
+      "header": {
+        "template": "purple",
+        "title": {
+          "tag": "plain_text",
+          "content": "🎨 设计稿审核"
+        }
+      },
+      "elements": [
+        {
+          "tag": "img",
+          "img_key": "${IMAGE_KEY}",
+          "alt": {
+            "tag": "plain_text",
+            "content": "设计稿"
+          }
+        },
+        {
+          "tag": "div",
+          "text": {
+            "tag": "lark_md",
+            "content": "${DESIGN_DESCRIPTION}"
+          }
+        },
+        {
+          "tag": "hr"
+        },
+        {
+          "tag": "action",
+          "actions": [
+            {
+              "tag": "button",
+              "text": {
+                "tag": "plain_text",
+                "content": "✅ 通过"
+              },
+              "type": "primary",
+              "value": "approve_${DESIGN_ID}"
+            },
+            {
+              "tag": "button",
+              "text": {
+                "tag": "plain_text",
+                "content": "✏️ 修改"
+              },
+              "type": "default",
+              "value": "modify_${DESIGN_ID}"
+            }
+          ]
+        }
+      ]
+    },
+    "copywriting-review": {
+      "name": "文案审核卡片",
+      "config": {
+        "wide_screen_mode": true
+      },
+      "header": {
+        "template": "orange",
+        "title": {
+          "tag": "plain_text",
+          "content": "📝 文案审核"
+        }
+      },
+      "elements": [
+        {
+          "tag": "div",
+          "text": {
+            "tag": "lark_md",
+            "content": "${COPYWRITING_CONTENT}"
+          }
+        },
+        {
+          "tag": "hr"
+        },
+        {
+          "tag": "note",
+          "elements": [
+            {
+              "tag": "plain_text",
+              "content": "字数：${WORD_COUNT} | 风格：${STYLE}"
+            }
+          ]
+        },
+        {
+          "tag": "action",
+          "actions": [
+            {
+              "tag": "button",
+              "text": {
+                "tag": "plain_text",
+                "content": "✅ 通过"
+              },
+              "type": "primary",
+              "value": "approve_${COPY_ID}"
+            },
+            {
+              "tag": "button",
+              "text": {
+                "tag": "plain_text",
+                "content": "✏️ 修改"
+              },
+              "type": "default",
+              "value": "modify_${COPY_ID}"
+            },
+            {
+              "tag": "button",
+              "text": {
+                "tag": "plain_text",
+                "content": "❌ 重写"
+              },
+              "type": "default",
+              "value": "rewrite_${COPY_ID}"
+            }
+          ]
+        }
+      ]
+    }
+  },
+  "color_templates": {
+    "blue": "科技、专业",
+    "red": "热情、重要",
+    "green": "自然、健康",
+    "purple": "创意、设计",
+    "orange": "活力、年轻"
+  }
+}
