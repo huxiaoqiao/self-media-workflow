@@ -474,7 +474,10 @@ export async function postArticle(options: ArticleOptions): Promise<void> {
 
         // Navigate to home if not already there
         const currentUrl = await evaluate<string>(session, 'window.location.href');
-        if (!currentUrl.includes('/cgi-bin/home')) {
+        const isEditorTab = currentUrl.includes('/cgi-bin/appmsg') && currentUrl.includes('appmsg_edit');
+        if (isEditorTab) {
+          console.log('[wechat] Already on editor tab, skipping home navigation.');
+        } else if (!currentUrl.includes('/cgi-bin/home')) {
           console.log('[wechat] Navigating to home...');
           await evaluate(session, `window.location.href = '${WECHAT_URL}cgi-bin/home?t=home/index'`);
           await sleep(5000);

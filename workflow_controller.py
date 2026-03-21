@@ -1,4 +1,5 @@
 #!/usr/bin/env python3
+# -*- coding: utf-8 -*-
 """
 新媒体超级工厂 - 中央调度器 (Agentic Controller)
 本脚本负责串联 xiaohongshu-cli，baoyu-skills 和 huashu-skills，
@@ -689,24 +690,47 @@ class SelfMediaController:
         article_content = ""
         new_title = ""
         
-        if "## 第二部分" in final_content:
-            parts = final_content.split("## 第二部分")
-            video_script = parts[0].replace("## 第一部分：", "").replace("## 第一部分", "").strip()
-            article_content = parts[1].replace("：", "", 1).strip()
-            
-            # 彻底清理正文开头的标识词
-            article_content = article_content.replace("【深度长文（正文）】", "").replace("## 第二部分", "").strip()
-            
-            # 使用正则提取 [文章标题] 后面的内容
-            import re
-            title_match = re.search(r"\[文章标题\]\s*(.*)", article_content)
-            if title_match:
-                new_title = title_match.group(1).strip()
-                # 去掉内容中的 [文章标题] 标记行
-                article_content = re.sub(r"\[文章标题\].*", "", article_content, count=1).strip()
-                print(f"🔥 捕获到全新爆款标题: {new_title}")
+        # 彻底清理正文开头的标识词 (增强版)
+        import re
+        
+        # 针对模型输出的两种常见格式进行正则拆分
+        # 模式 1: ## 第一部分... ## 第二部分...
+        # 模式 2: ## 视频脚本... --- [文章标题]...
+        
+        video_script = ""
+        article_content = final_content
+        new_title = ""
+
+        # 尝试寻找脚本部分 (第一部分)
+        # 匹配 ## 第一部分 或 ## 视频脚本 开头，直到遇到 --- 或 ## 第二部分 或 [文章标题]
+        script_pattern = re.compile(r"##\s*(?:第一部分|视频脚本|爆款短视频脚本)[：:\s]*(.*?)(\n\s*---|\n\s*##\s*第二部分|\n\s*\[文章标题\])", re.DOTALL | re.IGNORECASE)
+        script_match = script_pattern.search(final_content)
+        
+        if script_match:
+            video_script = script_match.group(1).strip()
+            # 剩余部分作为正文处理的起点
+            article_content = final_content[script_match.end(1):].strip()
         else:
-            article_content = final_content
+            # 兜底方案：如果没找到明确的第一部分标记，但有分割线或第二部分标记
+            parts = re.split(r"\n\s*---\s*\n|\n\s*##\s*第二部分|\n\s*\[文章标题\]", final_content, maxsplit=1)
+            if len(parts) > 1:
+                video_script = parts[0].replace("## 第一部分", "").replace("## 视频脚本", "").replace("：", "").replace(":", "").strip()
+                article_content = parts[1]
+            else:
+                article_content = final_content
+
+        # 尝试从全文或正文中提取标题
+        title_pattern = re.compile(r"\[文章标题\]\s*(.*)", re.IGNORECASE)
+        title_match = title_pattern.search(final_content)
+        if title_match:
+            new_title = title_match.group(1).strip()
+            # 从正文中剔除标题行
+            article_content = title_pattern.sub("", article_content).strip()
+            print(f"🔥 捕获到全新爆款标题: {new_title}")
+
+        # 最终清理文章正文中的冗余标记
+        article_content = re.sub(r"##\s*第二部分.*?\n", "", article_content, flags=re.IGNORECASE)
+        article_content = article_content.replace("【深度长文（正文）】", "").replace("---", "").strip()
 
         # 写入短视频脚本到本地 drafts 文件夹
         script_name = f"video_script_{time_slug}.md"
@@ -1009,7 +1033,7 @@ class SelfMediaController:
             env["PYTHONIOENCODING"] = "utf-8"
             
             print(f"执行命令: {' '.join(cmd)}")
-            result = subprocess.run(cmd, cwd=scripts_dir, env=env, capture_output=True, text=True)
+            result = subprocess.run(cmd, cwd=scripts_dir, env=env, capture_output=True, text=True, encoding='utf-8')
             
             # 打印输出以便调试
             if result.stdout:
